@@ -45,14 +45,19 @@ function Xray(html, formatters) {
     $scope = $scope || $document;
 
     // switch between the types of objects
-    switch(type(obj)) {
-      case 'string': return string_find_one.call(xray, $scope, obj, formatters);
-      case 'object': return object_find_one.call(xray, $scope, obj, formatters);
+    switch (type(obj)) {
+      case 'string':
+        return string_find_one.call(xray, $scope, obj, formatters);
+      case 'object':
+        return object_find_one.call(xray, $scope, obj, formatters);
       case 'array':
         switch (type(obj[0])) {
-          case 'string': return string_find_many.call(xray, $scope, obj[0], formatters);
-          case 'object': return object_find_many.call(xray, $scope, obj[0], formatters);
-          default: return [];
+          case 'string':
+            return string_find_many.call(xray, $scope, obj[0], formatters);
+          case 'object':
+            return object_find_many.call(xray, $scope, obj[0], formatters);
+          default:
+            return [];
         }
     }
   }
@@ -69,9 +74,7 @@ function Xray(html, formatters) {
 
 function string_find_one($root, str, formatters) {
   var select = parse(str, formatters);
-  var $el = select.selector
-    ? $root.find(select.selector).eq(0)
-    : $root.eq(0);
+  var $el = select.selector ? $root.find(select.selector).eq(0) : $root.eq(0);
 
   return $el.length ? render($el, select) : undefined;
 }
@@ -85,7 +88,9 @@ function string_find_one($root, str, formatters) {
  * @return {String}
  */
 
+
 function object_find_one($root, obj, formatters) {
+  var $prevroot = $root;
   $root = obj.$root ? $root.find(obj.$root) : $root;
   var xray = this;
   var out = {};
@@ -93,9 +98,14 @@ function object_find_one($root, obj, formatters) {
   keys(obj).forEach(function(k) {
     var v = obj[k];
 
-    var str = 'string' == typeof v
-      ? string_find_one.call(xray, $root, v, formatters)
-      : xray(v, $root);
+    var str = 'string' == typeof v ? string_find_one.call(xray, $root, v, formatters) : xray(v, v.$docRoot ? $root._root : $root);
+
+    if (v.$flatten) {
+      for (var prop in str) {
+        str = str[prop];
+        break;
+      }
+    }
 
     if (str !== undefined) out[k] = str;
   });
@@ -135,9 +145,7 @@ function string_find_many($root, str, formatters) {
  */
 
 function object_find_many($root, obj, formatters) {
-  return obj.$root
-    ? object_find_many_with_root.call(this, $root, obj, formatters)
-    : object_find_many_without_root.call(this, $root, obj, formatters)
+  return obj.$root ? object_find_many_with_root.call(this, $root, obj, formatters) : object_find_many_without_root.call(this, $root, obj, formatters)
 }
 
 /**
@@ -187,9 +195,12 @@ function object_find_many_without_root($root, obj, formatters) {
     var v = obj[k];
 
     switch (type(v)) {
-      case 'string': return string_find_many.call(this, $root, v, formatters);
-      case 'object': return object_find_many.call(this, $root, v, formatters);
-      default: return [];
+      case 'string':
+        return string_find_many.call(this, $root, v, formatters);
+      case 'object':
+        return object_find_many.call(this, $root, v, formatters);
+      default:
+        return [];
     }
   });
 
@@ -258,12 +269,12 @@ function parse(str, filters) {
 
 function render($el, select) {
   switch (select.attribute) {
-    case 'html': return fmt($el.html());
-    case undefined: return fmt($el.text());
+    case 'html':
+      return fmt($el.html());
+    case undefined:
+      return fmt($el.text());
     default:
-      return rdom.test(select.attribute)
-        ? fmt($el[0][select.attribute])
-        : fmt($el.attr(select.attribute));
+      return rdom.test(select.attribute) ? fmt($el[0][select.attribute]) : fmt($el.attr(select.attribute));
   }
 
   function fmt(str) {
