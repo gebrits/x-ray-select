@@ -101,9 +101,9 @@ function object_find_one($root, obj, formatters) {
     var str = 'string' == typeof v ? string_find_one.call(xray, $root, v, formatters) : xray(v, v.$docRoot ? $root._root : $root);
 
     if (v.$flatten) {
-      str.forEach(function(propVal, propKey) {
-        out[propKey] = propVal; //no undefined here
-      });
+      for (var prop in str) {
+        out[prop] = str[prop]; //no undefined here
+      }
     } else {
       if (str !== undefined) out[k] = str;
     }
